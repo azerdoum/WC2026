@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>World Cup 2026 Schedule</title>
+  <meta name="description" content="A live, searchable World Cup 2026 schedule built from a CSV source sheet.">
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #111827;
+      --muted: #5f6b7a;
+      --panel: #ffffff;
+      --line: #d8dee8;
+      --wash: #f4f7fb;
+      --green: #147d4f;
+      --blue: #1d4ed8;
+      --red: #c2410c;
+      --gold: #b7791f;
+      --shadow: 0 18px 60px rgba(17, 24, 39, .16);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--wash);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 76vh;
+      display: flex;
+      align-items: flex-end;
+      overflow: hidden;
+      background: #0a1424;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(90deg, rgba(5, 11, 20, .9) 0%, rgba(5, 11, 20, .68) 42%, rgba(5, 11, 20, .22) 100%),
+        linear-gradient(0deg, rgba(5, 11, 20, .82) 0%, rgba(5, 11, 20, .05) 46%);
+      z-index: 1;
+    }
+
+    .hero img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-inner,
+    main {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 2;
+      padding: 84px 0 42px;
+      color: #fff;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 14px;
+      color: rgba(255, 255, 255, .82);
+      font-size: .82rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 7px rgba(34, 197, 94, .18);
+    }
+
+    h1 {
+      max-width: 820px;
+      margin: 0;
+      font-size: clamp(3rem, 8vw, 7.6rem);
+      line-height: .88;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      max-width: 650px;
+      margin: 22px 0 30px;
+      color: rgba(255, 255, 255, .86);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      line-height: 1.55;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 12px;
+      max-width: 760px;
+    }
+
+    .stat {
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .22);
+      background: rgba(255, 255, 255, .09);
+      backdrop-filter: blur(14px);
+      border-radius: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 6px;
+      color: rgba(255, 255, 255, .76);
+      font-size: .82rem;
+    }
+
+    main {
+      margin-top: -28px;
+      position: relative;
+      z-index: 3;
+      padding-bottom: 56px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1.4fr repeat(3, minmax(150px, .65fr)) auto auto;
+      gap: 10px;
+      align-items: end;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .95);
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 800;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .star-filter {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 0 13px;
+      background: #fff;
+      color: var(--ink);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .star-filter.active {
+      border-color: rgba(183, 121, 31, .45);
+      background: #fff8e1;
+      color: #8a570d;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+      min-width: 156px;
+      height: 42px;
+      background: #eef2f7;
+    }
+
+    .segmented button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .segmented button.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .next-strip {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin: 18px 0 20px;
+      padding: 18px;
+      border-radius: 8px;
+      background: #112033;
+      color: #fff;
+    }
+
+    .next-badge {
+      display: inline-grid;
+      place-items: center;
+      min-width: 78px;
+      min-height: 52px;
+      border-radius: 7px;
+      background: #f8fafc;
+      color: #112033;
+      font-weight: 900;
+    }
+
+    .next-strip p {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, .72);
+    }
+
+    .summary {
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+
+    .days {
+      display: grid;
+      gap: 18px;
+    }
+
+    .day {
+      display: grid;
+      grid-template-columns: 190px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .day-heading {
+      position: sticky;
+      top: 12px;
+      padding: 16px;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .day-heading strong {
+      display: block;
+      font-size: 1.08rem;
+    }
+
+    .day-heading span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .match-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
+    }
+
+    .match-card {
+      min-height: 194px;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-left: 7px solid var(--home-color, var(--line));
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, var(--home-wash, transparent), transparent 42%),
+        linear-gradient(315deg, var(--away-wash, transparent), transparent 42%),
+        var(--panel);
+      box-shadow: 0 8px 24px rgba(17, 24, 39, .06);
+    }
+
+    .match-card.starred {
+      border-color: rgba(183, 121, 31, .55);
+      box-shadow: 0 10px 30px rgba(183, 121, 31, .16);
+    }
+
+    .match-top,
+    .venue {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .star-button {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #8b96a6;
+      font-size: 1.28rem;
+      line-height: 1;
+    }
+
+    .star-button:hover,
+    .star-button[aria-pressed="true"] {
+      border-color: rgba(183, 121, 31, .5);
+      background: #fff8e1;
+      color: var(--gold);
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .group {
+      background: #e7f5ee;
+      color: var(--green);
+    }
+
+    .stage {
+      background: #eef2ff;
+      color: var(--blue);
+    }
+
+    .teams {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 10px;
+      align-items: center;
+      font-size: 1.2rem;
+      font-weight: 900;
+    }
+
+    .team-name {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .teams span:last-child.team-name {
+      justify-content: flex-end;
+    }
+
+    .team-color {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 14px;
+      border: 1px solid rgba(17, 24, 39, .2);
+      border-radius: 999px;
+      background: var(--team-color);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .42);
+    }
+
+    .teams span:first-child {
+      text-align: left;
+    }
+
+    .teams span:last-child {
+      text-align: right;
+    }
+
+    .versus {
+      display: inline-grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: #f1f5f9;
+      color: var(--muted);
+      font-size: .72rem;
+    }
+
+    .time {
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    .venue {
+      color: var(--muted);
+      font-size: .92rem;
+      line-height: 1.35;
+    }
+
+    .table-wrap {
+      display: none;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      background: #f8fafc;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tr.starred {
+      background: #fffdf5;
+    }
+
+    .empty {
+      padding: 46px 20px;
+      text-align: center;
+      color: var(--muted);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+
+    .show-table .days {
+      display: none;
+    }
+
+    .show-table .table-wrap {
+      display: block;
+    }
+
+    footer {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto 40px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        min-height: 70vh;
+      }
+
+      .hero-stats,
+      .toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar label:first-child,
+      .segmented,
+      .star-filter {
+        grid-column: 1 / -1;
+      }
+
+      .next-strip,
+      .day {
+        grid-template-columns: 1fr;
+      }
+
+      .day-heading {
+        position: static;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .hero-inner,
+      main,
+      footer {
+        width: min(100% - 22px, 1180px);
+      }
+
+      .hero-stats,
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .next-strip {
+        gap: 10px;
+      }
+
+      .match-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .teams {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .teams span,
+      .teams span:first-child,
+      .teams span:last-child {
+        text-align: left;
+      }
+
+      .teams span:last-child.team-name {
+        justify-content: flex-start;
+      }
+
+      .versus {
+        width: auto;
+        height: auto;
+        justify-self: start;
+        padding: 5px 10px;
+      }
+
+      .match-top {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <img src="assets/world-cup-hero.png" alt="">
+    <div class="hero-inner">
+      <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Live from the source sheet</p>
+      <h1>World Cup 2026 Schedule</h1>
+      <p class="lede">Browse the group-stage matches by date, team, group, city, and stadium. The page reads directly from the CSV in this repo, so updates are just a commit away.</p>
+      <div class="hero-stats" aria-label="Schedule totals">
+        <div class="stat"><strong id="matchCount">--</strong><span>matches</span></div>
+        <div class="stat"><strong id="teamCount">--</strong><span>teams</span></div>
+        <div class="stat"><strong id="cityCount">--</strong><span>host cities</span></div>
+        <div class="stat"><strong id="dateCount">--</strong><span>match days</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+    <section class="toolbar" aria-label="Schedule filters">
+      <label>
+        Search
+        <input id="search" type="search" placeholder="Team, stadium, city, group...">
+      </label>
+      <label>
+        Group
+        <select id="groupFilter"></select>
+      </label>
+      <label>
+        City
+        <select id="cityFilter"></select>
+      </label>
+      <label>
+        Team
+        <select id="teamFilter"></select>
+      </label>
+      <button type="button" class="star-filter" id="starredOnly" aria-pressed="false">Starred</button>
+      <div class="segmented" aria-label="View mode">
+        <button type="button" class="active" id="cardsView">Cards</button>
+        <button type="button" id="tableView">Table</button>
+      </div>
+    </section>
+
+    <section class="next-strip" id="nextStrip" aria-live="polite">
+      <div class="next-badge">Next</div>
+      <div>
+        <strong id="nextTitle">Loading schedule...</strong>
+        <p id="nextMeta">Times are shown exactly as provided in the CSV.</p>
+      </div>
+      <div class="pill stage" id="sourceNote">CSV</div>
+    </section>
+
+    <p class="summary" id="summary"></p>
+    <section class="days" id="days"></section>
+    <section class="table-wrap" aria-label="Schedule table">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Star</th>
+            <th>Time</th>
+            <th>Match</th>
+            <th>Group</th>
+            <th>Stage</th>
+            <th>Venue</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    Source: <code>Schedule 2026(Schedule).csv</code>. Times are presented as listed in the sheet.
+  </footer>
+
+  <script>
+    const dataPath = "matches.json";
+    const csvPath = encodeURI("Schedule 2026(Schedule).csv");
+    const starsStorageKey = "wc2026-starred-matches";
+    const els = {
+      app: document.querySelector("#app"),
+      matchCount: document.querySelector("#matchCount"),
+      teamCount: document.querySelector("#teamCount"),
+      cityCount: document.querySelector("#cityCount"),
+      dateCount: document.querySelector("#dateCount"),
+      search: document.querySelector("#search"),
+      groupFilter: document.querySelector("#groupFilter"),
+      cityFilter: document.querySelector("#cityFilter"),
+      teamFilter: document.querySelector("#teamFilter"),
+      starredOnly: document.querySelector("#starredOnly"),
+      cardsView: document.querySelector("#cardsView"),
+      tableView: document.querySelector("#tableView"),
+      nextTitle: document.querySelector("#nextTitle"),
+      nextMeta: document.querySelector("#nextMeta"),
+      summary: document.querySelector("#summary"),
+      days: document.querySelector("#days"),
+      tableBody: document.querySelector("#tableBody")
+    };
+
+    const monthIndex = {
+      January: 0, February: 1, March: 2, April: 3, May: 4, June: 5,
+      July: 6, August: 7, September: 8, October: 9, November: 10, December: 11
+    };
+
+    const teamColors = {
+      "Algeria": "#0c8f4f",
+      "Argentina": "#75aadb",
+      "Australia": "#f6c915",
+      "Austria": "#ef233c",
+      "Belgium": "#f2c300",
+      "Bosnia and Herzegovina": "#1d4ed8",
+      "Brazil": "#f7d117",
+      "Cabo Verde": "#2563eb",
+      "Canada": "#d80621",
+      "Colombia": "#fcd116",
+      "Congo DR": "#007fff",
+      "Cote d'Ivoire": "#f58220",
+      "Croatia": "#d71920",
+      "Curasao": "#0052b4",
+      "Czechia": "#d7141a",
+      "Ecuador": "#ffdd00",
+      "Egypt": "#ce1126",
+      "England": "#ffffff",
+      "France": "#1d4ed8",
+      "Germany": "#111827",
+      "Ghana": "#fcd116",
+      "Haiti": "#00209f",
+      "IR Iran": "#239f40",
+      "Iraq": "#ce1126",
+      "Japan": "#1f2937",
+      "Jordan": "#007a3d",
+      "Korea Republic": "#c60c30",
+      "Mexico": "#006341",
+      "Morocco": "#c1272d",
+      "Netherlands": "#f97316",
+      "New Zealand": "#111827",
+      "Norway": "#ba0c2f",
+      "Panama": "#d21034",
+      "Paraguay": "#d52b1e",
+      "Portugal": "#006600",
+      "Qatar": "#8a1538",
+      "Saudi Arabia": "#006c35",
+      "Scotland": "#005eb8",
+      "Senegal": "#00853f",
+      "South Africa": "#007a4d",
+      "Spain": "#c60b1e",
+      "Sweden": "#005293",
+      "Switzerland": "#d52b1e",
+      "Tunisia": "#e70013",
+      "Turkiye": "#e30a17",
+      "USA": "#3c3b6e",
+      "Uruguay": "#80bfff",
+      "Uzbekistan": "#1eb6e7"
+    };
+
+    let matches = [];
+    let starredMatches = loadStarredMatches();
+    let showStarredOnly = false;
+
+    loadSchedule()
+      .then(data => {
+        matches = data.matches;
+        document.querySelector("#sourceNote").textContent = data.source;
+        hydrateFilters(matches);
+        render();
+      })
+      .catch(error => {
+        els.days.innerHTML = `<div class="empty">${escapeHtml(error.message)}. Serve this folder with a local server or GitHub Pages so the browser can fetch the schedule.</div>`;
+        els.summary.textContent = "";
+      });
+
+    [els.search, els.groupFilter, els.cityFilter, els.teamFilter].forEach(control => {
+      control.addEventListener("input", render);
+    });
+
+    els.cardsView.addEventListener("click", () => setView("cards"));
+    els.tableView.addEventListener("click", () => setView("table"));
+    els.starredOnly.addEventListener("click", () => {
+      showStarredOnly = !showStarredOnly;
+      els.starredOnly.classList.toggle("active", showStarredOnly);
+      els.starredOnly.setAttribute("aria-pressed", String(showStarredOnly));
+      render();
+    });
+    els.days.addEventListener("click", event => {
+      const button = event.target.closest("[data-star-id]");
+      if (button) toggleStar(button.dataset.starId);
+    });
+    els.tableBody.addEventListener("click", event => {
+      const button = event.target.closest("[data-star-id]");
+      if (button) toggleStar(button.dataset.starId);
+    });
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let quoted = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && quoted && next === '"') {
+          field += '"';
+          i++;
+        } else if (char === '"') {
+          quoted = !quoted;
+        } else if (char === "," && !quoted) {
+          row.push(field);
+          field = "";
+        } else if ((char === "\n" || char === "\r") && !quoted) {
+          if (char === "\r" && next === "\n") i++;
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += char;
+        }
+      }
+
+      if (field || row.length) {
+        row.push(field);
+        rows.push(row);
+      }
+
+      const headers = rows.shift().map(value => value.trim());
+      return rows.map(values => Object.fromEntries(headers.map((header, index) => [header, (values[index] || "").trim()])));
+    }
+
+    function loadSchedule() {
+      return fetch(dataPath, { cache: "no-store" })
+        .then(response => {
+          if (!response.ok) throw new Error("No generated match data yet");
+          return response.json();
+        })
+        .then(payload => {
+          const generatedMatches = (payload.matches || [])
+            .filter(match => match.date && match.home && match.away)
+            .map((match, index) => normalizeGeneratedMatch(match, index))
+            .sort((a, b) => a.sortDate - b.sortDate);
+
+          if (!generatedMatches.length) throw new Error("Generated match data is empty");
+
+          return {
+            matches: generatedMatches,
+            source: payload.source || "API"
+          };
+        })
+        .catch(() => fetch(csvPath)
+          .then(response => {
+            if (!response.ok) throw new Error("Could not load schedule CSV");
+            return response.text();
+          })
+          .then(text => ({
+            matches: parseCsv(text)
+              .filter(row => row.Date && row["Team (Home)"] && row["Team (Away)"])
+              .map((row, index) => normalizeMatch(row, index))
+              .sort((a, b) => a.sortDate - b.sortDate),
+            source: "CSV"
+          })));
+    }
+
+    function normalizeMatch(row, index) {
+      return {
+        id: index,
+        date: row.Date,
+        home: row["Team (Home)"],
+        time: row.Time,
+        away: row["Team (Away)"],
+        stage: row.Stage,
+        group: row.Group,
+        stadium: row.Stadium,
+        city: row.City,
+        sortDate: parseMatchDate(row.Date, row.Time),
+        key: [row.Date, row.Time, row["Team (Home)"], row["Team (Away)"], row.Stadium].join("|")
+      };
+    }
+
+    function normalizeGeneratedMatch(match, index) {
+      return {
+        id: match.id || index,
+        date: match.date,
+        home: match.home,
+        time: match.time,
+        away: match.away,
+        stage: match.stage || "",
+        group: match.group || "",
+        stadium: match.stadium || "",
+        city: match.city || "",
+        status: match.status || "SCHEDULED",
+        homeScore: match.homeScore,
+        awayScore: match.awayScore,
+        sortDate: match.utcDate ? new Date(match.utcDate) : parseMatchDate(match.date, match.time),
+        key: match.key || [match.date, match.time, match.home, match.away, match.stadium].join("|")
+      };
+    }
+
+    function parseMatchDate(dateText, timeText) {
+      const dateParts = dateText.match(/^\w+\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/);
+      const timeParts = timeText.match(/^(\d{1,2}):(\d{2})\s+(AM|PM)$/i);
+      if (!dateParts || !timeParts) return new Date(dateText);
+
+      let hours = Number(timeParts[1]);
+      const minutes = Number(timeParts[2]);
+      const meridiem = timeParts[3].toUpperCase();
+      if (meridiem === "PM" && hours !== 12) hours += 12;
+      if (meridiem === "AM" && hours === 12) hours = 0;
+
+      return new Date(Number(dateParts[3]), monthIndex[dateParts[2]], Number(dateParts[1]), hours, minutes);
+    }
+
+    function hydrateFilters(data) {
+      populateSelect(els.groupFilter, "All groups", unique(data.map(match => match.group)));
+      populateSelect(els.cityFilter, "All cities", unique(data.map(match => match.city)));
+      populateSelect(els.teamFilter, "All teams", unique(data.flatMap(match => [match.home, match.away])));
+
+      els.matchCount.textContent = data.length;
+      els.teamCount.textContent = unique(data.flatMap(match => [match.home, match.away])).length;
+      els.cityCount.textContent = unique(data.map(match => match.city)).length;
+      els.dateCount.textContent = unique(data.map(match => match.date)).length;
+      renderNext(data);
+    }
+
+    function populateSelect(select, allLabel, values) {
+      select.innerHTML = [`<option value="">${allLabel}</option>`]
+        .concat(values.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+        .join("");
+    }
+
+    function render() {
+      const filtered = getFilteredMatches();
+      const starredCount = matches.filter(match => starredMatches.has(match.key)).length;
+      const suffix = starredCount === 1 ? "1 starred" : `${starredCount} starred`;
+      els.summary.textContent = `${filtered.length} of ${matches.length} matches shown - ${suffix}`;
+      renderCards(filtered);
+      renderTable(filtered);
+    }
+
+    function getFilteredMatches() {
+      const term = els.search.value.trim().toLowerCase();
+      const group = els.groupFilter.value;
+      const city = els.cityFilter.value;
+      const team = els.teamFilter.value;
+
+      return matches.filter(match => {
+        const haystack = [match.date, match.home, match.away, match.time, match.stage, match.group, match.stadium, match.city]
+          .join(" ")
+          .toLowerCase();
+
+        return (!term || haystack.includes(term))
+          && (!group || match.group === group)
+          && (!city || match.city === city)
+          && (!team || match.home === team || match.away === team)
+          && (!showStarredOnly || starredMatches.has(match.key));
+      });
+    }
+
+    function renderNext(data) {
+      const now = new Date();
+      const next = data.find(match => match.sortDate >= now) || data[0];
+      if (!next) return;
+
+      els.nextTitle.textContent = `${next.home} vs ${next.away}`;
+      els.nextMeta.textContent = `${next.date} at ${next.time} - ${next.stadium}, ${next.city}`;
+    }
+
+    function renderCards(data) {
+      if (!data.length) {
+        els.days.innerHTML = `<div class="empty">No matches match those filters.</div>`;
+        return;
+      }
+
+      const byDate = groupBy(data, match => match.date);
+      els.days.innerHTML = Object.entries(byDate).map(([date, dayMatches]) => `
+        <article class="day">
+          <aside class="day-heading">
+            <strong>${escapeHtml(shortDate(date))}</strong>
+            <span>${dayMatches.length} ${dayMatches.length === 1 ? "match" : "matches"}</span>
+          </aside>
+          <div class="match-grid">
+            ${dayMatches.map(matchCard).join("")}
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function matchCard(match) {
+      const starred = starredMatches.has(match.key);
+      const homeColor = getTeamColor(match.home);
+      const awayColor = getTeamColor(match.away);
+      return `
+        <article class="match-card${starred ? " starred" : ""}" style="--home-color: ${homeColor}; --home-wash: ${colorWash(homeColor)}; --away-wash: ${colorWash(awayColor)};">
+          <div class="match-top">
+            <div class="badge-row">
+              <span class="pill group">${escapeHtml(match.group)}</span>
+              <span class="pill stage">${escapeHtml(match.stage)}</span>
+            </div>
+            ${starButton(match)}
+          </div>
+          <div class="teams">
+            <span class="team-name"><span class="team-color" style="--team-color: ${homeColor};"></span>${escapeHtml(match.home)}</span>
+            <span class="versus">VS</span>
+            <span class="team-name">${escapeHtml(match.away)}<span class="team-color" style="--team-color: ${awayColor};"></span></span>
+          </div>
+          <div class="match-top">
+            <span class="time">${escapeHtml(match.time)}</span>
+            <span>${escapeHtml(shortDate(match.date))}</span>
+          </div>
+          <div class="venue">
+            <span>${escapeHtml(match.stadium)}</span>
+            <strong>${escapeHtml(match.city)}</strong>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderTable(data) {
+      els.tableBody.innerHTML = data.map(match => `
+        <tr class="${starredMatches.has(match.key) ? "starred" : ""}">
+          <td>${escapeHtml(match.date)}</td>
+          <td>${starButton(match)}</td>
+          <td><strong>${escapeHtml(match.time)}</strong></td>
+          <td>${escapeHtml(match.home)} vs ${escapeHtml(match.away)}</td>
+          <td>${escapeHtml(match.group)}</td>
+          <td>${escapeHtml(match.stage)}</td>
+          <td>${escapeHtml(match.stadium)}, ${escapeHtml(match.city)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function starButton(match) {
+      const starred = starredMatches.has(match.key);
+      const label = starred ? "Unstar this match" : "Star this match";
+      return `
+        <button
+          type="button"
+          class="star-button"
+          data-star-id="${escapeHtml(match.key)}"
+          aria-pressed="${starred}"
+          aria-label="${label}: ${escapeHtml(match.home)} vs ${escapeHtml(match.away)}"
+          title="${label}"
+        >${starred ? "&#9733;" : "&#9734;"}</button>
+      `;
+    }
+
+    function toggleStar(matchKey) {
+      if (starredMatches.has(matchKey)) {
+        starredMatches.delete(matchKey);
+      } else {
+        starredMatches.add(matchKey);
+      }
+
+      saveStarredMatches();
+      render();
+    }
+
+    function loadStarredMatches() {
+      try {
+        return new Set(JSON.parse(localStorage.getItem(starsStorageKey) || "[]"));
+      } catch {
+        return new Set();
+      }
+    }
+
+    function saveStarredMatches() {
+      localStorage.setItem(starsStorageKey, JSON.stringify([...starredMatches]));
+    }
+
+    function getTeamColor(team) {
+      return teamColors[team] || "#64748b";
+    }
+
+    function colorWash(hex) {
+      const { r, g, b } = hexToRgb(hex);
+      return `rgba(${r}, ${g}, ${b}, .12)`;
+    }
+
+    function hexToRgb(hex) {
+      const value = hex.replace("#", "");
+      return {
+        r: parseInt(value.slice(0, 2), 16),
+        g: parseInt(value.slice(2, 4), 16),
+        b: parseInt(value.slice(4, 6), 16)
+      };
+    }
+
+    function setView(view) {
+      const table = view === "table";
+      els.app.classList.toggle("show-table", table);
+      els.cardsView.classList.toggle("active", !table);
+      els.tableView.classList.toggle("active", table);
+    }
+
+    function unique(values) {
+      return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
+
+    function groupBy(values, getKey) {
+      return values.reduce((groups, value) => {
+        const key = getKey(value);
+        groups[key] = groups[key] || [];
+        groups[key].push(value);
+        return groups;
+      }, {});
+    }
+
+    function shortDate(dateText) {
+      return dateText.replace(/^(\w+)\s+(\d+)\s+(\w+)\s+(\d+)$/, "$1, $3 $2");
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
